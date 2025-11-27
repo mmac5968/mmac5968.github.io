@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>智能文案整理助手</title>
+  <meta name="description" content="抖音/快手/小红书/视频号文案提取与美化工具，纯前端，永不失效">
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoi57yW56iL5b2V5rGf55qE5a2X56ymIiwic3RhcnRfdXJsIjoiaHR0cHM6Ly9tbWFjNTk2OC5naXRodWIuaW8vIiwiZGlzcGxheSI6InN0YW5kYWxvbmUiLCJ0aGVtZV9jb2xvciI6IiM3MjJlZDEifQ==">
+  <!-- iOS PWA -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>✨</text></svg>">
+  <style id="theme-style">
+    :root {
+      --bg-primary: #ffffff;
+      --bg-secondary: #faf8ff;
+      --text-primary: #2d2d2d;
+      --text-secondary: #7d7d7d;
+      --border-color: #e0d6ff;
+      --btn-bg: #722ed1;
+      --btn-hover: #5f24b0;
+      --card-bg: #ffffff;
+      --shadow: 0 4px 12px rgba(114, 46, 209, 0.1);
+      --success: #52c41a;
+      --danger: #ff4d4f;
+      --radius: 16px;
+      --transition: all 0.25s ease;
+    }
+    .dark-mode {
+      --bg-primary: #1a1a1a;
+      --bg-secondary: #121212;
+      --text-primary: #f0f0f0;
+      --text-secondary: #b0b0b0;
+      --border-color: #3a3a3a;
+      --btn-bg: #9254de;
+      --btn-hover: #722ed1;
+      --card-bg: #252525;
+      --shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif;
+      background: linear-gradient(135deg, var(--bg-secondary), #f0f9ff);
+      color: var(--text-primary);
+      line-height: 1.6;
+      padding: 16px;
+      min-height: 100vh;
+      transition: var(--transition);
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      text-align: center;
+    }
+    h1 {
+      color: var(--btn-bg);
+      margin: 16px 0 12px;
+      font-size: 22px;
+      font-weight: 700;
+    }
+    .subtitle {
+      color: var(--text-secondary);
+      font-size: 14px;
+      margin-bottom: 16px;
+    }
+    textarea {
+      width: 100%;
+      min-height: 120px;
+      padding: 14px;
+      border: 2px solid var(--border-color);
+      border-radius: var(--radius);
+      font-size: 16px;
+      outline: none;
+      resize: vertical;
+      max-height: 220px;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      transition: var(--transition);
+      box-shadow: var(--shadow);
+    }
+    textarea:focus {
+      border-color: var(--btn-bg);
+      box-shadow: 0 0 0 2px rgba(114, 46, 209, 0.2);
+    }
+    .btn-group {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin: 15px 0;
+    }
+    button {
+      background: var(--btn-bg);
+      color: white;
+      border: none;
+      padding: 12px 16px;
+      border-radius: 50px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      min-height: 48px;
+      min-width: 80px;
+      position: relative;
+      overflow: hidden;
+    }
+    button::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 5px;
+      height: 5px;
+      background: rgba(255,255,255,0.5);
+      opacity: 0;
+      border-radius: 100%;
+      transform: scale(1,1) translate(-50%);
+      transform-origin: 50% 50%;
+    }
+    button:active::after {
+      animation: ripple 0.6s ease-out;
+    }
+    @keyframes ripple {
+      0% { transform: scale(0,0); opacity: 0.5; }
+      100% { transform: scale(30,30); opacity: 0; }
+    }
+    button:hover, button:focus {
+      background: var(--btn-hover);
+      outline: none;
+    }
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .result-actions {
+      margin-top: 12px;
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .result-actions button {
+      padding: 10px 16px;
+      font-size: 14px;
+      min-width: 120px;
+    }
+    #result {
+      background: var(--card-bg);
+      padding: 16px;
+      border-radius: var(--radius);
+      margin-top: 16px;
+      display: none;
+      text-align: left;
+      max-height: 200px;
+      overflow-y: auto;
+      box-shadow: var(--shadow);
+      word-break: break-word;
+      font-size: 16px;
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+    }
+    .memo-item {
+      padding: 14px;
+      border-bottom: 1px solid var(--border-color);
+      cursor: pointer;
+      text-align: left;
+      position: relative;
+      min-height: 60px;
+      border-radius: var(--radius);
+      margin-bottom: 8px;
+      background: var(--bg-primary);
+      transition: var(--transition);
+    }
+    .memo-item:last-child { border-bottom: none; }
+    .memo-item:hover {
+      background: rgba(114, 46, 209, 0.08);
+    }
+    .delete-btn {
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: var(--danger);
+      color: white;
+      border: none;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      font-size: 20px;
+      cursor: pointer;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+    }
+    .memo-item:hover .delete-btn,
+    .memo-item:focus-within .delete-btn {
+      display: flex;
+    }
+    .tip {
+      color: var(--text-secondary);
+      font-size: 13px;
+      margin-top: 20px;
+      padding: 0 8px;
+      line-height: 1.5;
+    }
+    .footer {
+      margin-top: 24px;
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+    .toast {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--btn-bg);
+      color: white;
+      padding: 10px 20px;
+      border-radius: 50px;
+      z-index: 1000;
+      opacity: 0;
+      transition: opacity 0.3s;
+      font-weight: 500;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    .toast.show {
+      opacity: 1;
+    }
+    #pwa-prompt {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--card-bg);
+      color: var(--text-primary);
+      padding: 10px 16px;
+      border-radius: 50px;
+      box-shadow: var(--shadow);
+      z-index: 999;
+      display: none;
+      font-size: 14px;
+      border: 1px solid var(--border-color);
+    }
+    #pwa-prompt button {
+      background: var(--btn-bg);
+      color: white;
+      border: none;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 13px;
+      margin-left: 8px;
+      min-height: auto;
+      min-width: auto;
+    }
+    @media (max-width: 480px) {
+      h1 { font-size: 20px; }
+      .btn-group { gap: 8px; }
+      button { padding: 11px 14px; font-size: 14px; }
+      .result-actions { flex-direction: column; align-items: center; }
+      .result-actions button { width: 100%; max-width: 200px; }
+      body { padding: 12px; }
+    }
+  </style>
+</head>
+<body class="">
+  <div class="container">
+    <h1>✨ 智能文案整理助手</h1>
+    <p class="subtitle">抖音 · 快手 · 小红书 · 视频号</p>
+
+    <textarea 
+      id="input" 
+      placeholder="粘贴从 App 复制的分享内容（含口令/链接/文案）"
+      oninput="updateButtonState()"
+    ></textarea>
+
+    <div class="btn-group">
+      <button id="btn-example" onclick="fillExample()">示例 🧪</button>
+      <button id="btn-clean" onclick="cleanAndCopy()" disabled>清理并复制 ✅</button>
+      <button id="btn-theme" onclick="toggleTheme()">🌓 主题</button>
+    </div>
+
+    <div id="result"></div>
+    <div class="result-actions" id="resultActions" style="display:none;">
+      <button onclick="saveToMemo()" style="background:var(--success);">💾 保存到备忘录</button>
+    </div>
+
+    <div id="memoList" style="margin-top: 20px; display: none;"></div>
+
+    <p class="tip">
+      💡 使用方法：<br>
+      1. 在 App 中点击「分享」→「复制」<br>
+      2. 粘贴 → 清理 → 可保存到备忘录永久留存
+    </p>
+    
+    <p class="footer">© 2025 智能文案整理助手 · 纯前端 · 永不失效</p>
+  </div>
+
+  <div id="toast" class="toast">已复制！</div>
+  <div id="pwa-prompt">📱 可添加到主屏幕<br><button onclick="hidePwaPrompt()">知道了</button></div>
+
+  <script>
+    function relativeTime(date) {
+      const now = new Date();
+      const diff = now - date;
+      const minutes = Math.floor(diff / 60000);
+      const hours = Math.floor(diff / 3600000);
+      const days = Math.floor(diff / 86400000);
+
+      if (minutes < 1) return '刚刚';
+      if (minutes < 60) return `${minutes}分钟前`;
+      if (hours < 24) return `${hours}小时前`;
+      if (days === 1) return '昨天';
+      if (days < 7) return `${days}天前`;
+      return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
+    }
+
+    function toggleTheme() {
+      const body = document.body;
+      const isDark = body.classList.contains('dark-mode');
+      if (isDark) {
+        body.classList.remove('dark-mode');
+        localStorage.setItem('theme', 'light');
+      } else {
+        body.classList.add('dark-mode');
+        localStorage.setItem('theme', 'dark');
+      }
+    }
+
+    if (localStorage.getItem('theme') === 'dark' || 
+        (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.body.classList.add('dark-mode');
+    }
+
+    function updateButtonState() {
+      const input = document.getElementById('input').value.trim();
+      document.getElementById('btn-clean').disabled = !input;
+    }
+
+    function cleanText(text) {
+      if (!text) return '';
+      let cleaned = text
+        .replace(/https?:\/\/[^\s]+/g, '')
+        .replace(/#([\w\u4e00-\u9fa5]+)/g, '')
+        .replace(/复制此链接.*$/gi, '')
+        .replace(/打开.*[抖快小红微]音.*观看/gi, '')
+        .replace(/长按复制链接|网页链接|查看详情/gi, '')
+        .replace(/^.*?(?=[\u4e00-\u9fa5])/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+      if (cleaned.length > 50 && cleaned.includes('。')) {
+        cleaned = cleaned.replace(/([。！？])\s*/g, '$1\n\n');
+      }
+      return cleaned.trim();
+    }
+
+    function showToast(msg = '操作成功！') {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2000);
+    }
+
+    async function copyText(text) {
+      try {
+        await navigator.clipboard.writeText(text);
+        showToast('✅ 已复制干净文案！');
+      } catch (err) {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        try {
+          document.execCommand('copy');
+          showToast('✅ 已复制（兼容模式）');
+        } catch (e) {
+          showToast('❌ 请手动复制');
+        }
+        document.body.removeChild(ta);
+      }
+    }
+
+    function saveToMemo() {
+      const result = document.getElementById('result').textContent;
+      if (!result) return;
+
+      let memos = JSON.parse(localStorage.getItem('memos') || '[]');
+      const now = new Date();
+      memos.unshift({ content: result, time: now.getTime() });
+      localStorage.setItem('memos', JSON.stringify(memos));
+      showMemos();
+      showToast('💾 已保存到备忘录！');
+    }
+
+    function deleteMemo(index) {
+      let memos = JSON.parse(localStorage.getItem('memos') || '[]');
+      memos.splice(index, 1);
+      localStorage.setItem('memos', JSON.stringify(memos));
+      showMemos();
+    }
+
+    function clearMemos() {
+      if (confirm('确定清空所有备忘录？')) {
+        localStorage.removeItem('memos');
+        showMemos();
+        showToast('🗑️ 备忘录已清空');
+      }
+    }
+
+    function showMemos() {
+      const memos = JSON.parse(localStorage.getItem('memos') || '[]');
+      const container = document.getElementById('memoList');
+      if (memos.length === 0) {
+        container.style.display = 'none';
+        return;
+      }
+      container.style.display = 'block';
+      let html = '<h3 style="margin:15px 0;color:var(--success);">📝 我的备忘录</h3>';
+      memos.forEach((item, index) => {
+        const timeStr = relativeTime(new Date(item.time));
+        const preview = item.content.length > 60 ? item.content.substring(0, 60) + '...' : item.content;
+        html += `
+          <div class="memo-item" tabindex="0" onclick="useMemo(${index})" title="${item.content}">
+            <small style="color:var(--text-secondary);">${timeStr}</small><br>
+            ${preview}
+            <button class="delete-btn" onclick="event.stopPropagation(); deleteMemo(${index});">×</button>
+          </div>
+        `;
+      });
+      html += `<button onclick="clearMemos()" style="background:var(--danger);margin-top:12px;">清空备忘录</button>`;
+      container.innerHTML = html;
+    }
+
+    function useMemo(index) {
+      const memos = JSON.parse(localStorage.getItem('memos') || '[]');
+      document.getElementById('input').value = memos[index].content;
+      updateButtonState();
+      cleanAndCopy();
+    }
+
+    async function cleanAndCopy() {
+      const inputEl = document.getElementById('input');
+      const resultDiv = document.getElementById('result');
+      const actionsDiv = document.getElementById('resultActions');
+
+      if ('scrollIntoView' in inputEl) {
+        inputEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+
+      let raw = inputEl.value;
+      if (!raw.trim()) return;
+
+      const cleaned = cleanText(raw);
+      if (!cleaned) {
+        alert('清理后内容为空，请检查是否复制了有效文案');
+        return;
+      }
+
+      resultDiv.style.display = 'block';
+      resultDiv.textContent = cleaned;
+      actionsDiv.style.display = 'flex';
+
+      await copyText(cleaned);
+      showMemos();
+    }
+
+    function fillExample() {
+      const example = `我们终其一生向往的远方，原来是家门口的风景，这里的一草一木，是刻在骨子里的乡愁，也是别人的诗和远方...`;
+      document.getElementById('input').value = example;
+      updateButtonState();
+      
+      if (/Android|iPhone|iPad/i.test(navigator.userAgent)) {
+        setTimeout(() => {
+          document.getElementById('input').focus();
+        }, 300);
+      }
+    }
+
+    document.getElementById('input').addEventListener('keypress', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        cleanAndCopy();
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        document.getElementById('input').value = '';
+        updateButtonState();
+        document.getElementById('input').blur();
+      }
+    });
+
+    function hidePwaPrompt() {
+      document.getElementById('pwa-prompt').style.display = 'none';
+      localStorage.setItem('pwaDismissed', 'true');
+    }
+
+    if (/Android|iPhone|iPad/i.test(navigator.userAgent) && !localStorage.getItem('pwaDismissed')) {
+      setTimeout(() => {
+        document.getElementById('pwa-prompt').style.display = 'block';
+      }, 3000);
+    }
+
+    showMemos();
+  </script>
+</body>
+</html>
+
+
